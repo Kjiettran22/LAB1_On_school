@@ -1,54 +1,45 @@
 `timescale 1ns / 1ps
+module tb_led_toggle();
 
-module tb_top_module;
 
-    // Inputs (declared as reg)
-    reg clk_en;
+    reg clk;
     reg rst_n;
-    
-    // Outputs (declared as wire)
+    reg sw_n;
     wire led;
 
-    top_module uut (
-        .clk_en (clk_en),
-        .rst_n  (rst_n),
-        .led    (led)
+
+    led_toggle uut (
+        .clk(clk),
+        .rst_n(rst_n),
+        .sw_n(sw_n),
+        .led(led)
     );
 
-    defparam uut.u_clk_div.TARGET_COUNT = 26'd4;
 
-    // Generate 50MHz Clock (Period = 20ns, toggles every 10ns)
-    always begin
-        #10 clk_en = ~clk_en;
-    end
+    always #10 clk = ~clk;
 
-    // Stimulus process
+
     initial begin
         $dumpfile("dump.vcd");
-        $dumpvars(0, tb_top_module);
+        $dumpvars(0, tb_led_toggle);
+        
+        clk = 0;
+        rst_n = 1;
+        sw_n = 1;
 
-        // Monitor signals in the console window
-        $display("-----------------------------------------------------------------------");
-        $display("  Time (ns) | Reset (rst_n) | Counter | Enable Pulse | LED State");
-        $display("-----------------------------------------------------------------------");
-        
-        // Initialize signals
-        clk_en = 1'b0;
-        rst_n  = 1'b0; 
-        
-        #35;           
-        rst_n  = 1'b1; 
-        
-        #300;          
-        
-        $display("-----------------------------------------------------------------------");
-        $finish;      
+
+        #100 rst_n = 0; 
+        #50  rst_n = 1; 
+
+
+        #100 sw_n = 0;
+        #100 sw_n = 1;
+
+
+        #100 sw_n = 0;
+        #100 sw_n = 1;
+
+
+        #100 $finish;
     end
 
-    // Print values at every change of interest
-    always @(posedge clk_en or negedge rst_n or uut.u_clk_div.clk_en or led) begin
-        $display("%t ns |       %b       |   %2d    |       %b      |     %b", 
-                 $time, rst_n, uut.u_clk_div.counter, uut.u_clk_div.clk_en, led);
-    end
-
-endmodule
